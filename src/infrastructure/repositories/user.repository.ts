@@ -1,15 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UserM } from '../../domain/model/user';
+import { UserM, UserWithoutPassword } from '../../domain/model/user';
 import { UserRepository } from '../../domain/repositories/userRepository.interface';
 import { User } from '../entities/user.entity';
+import { BcryptService } from '../services/bcrypt/bcrypt.service';
+import { ILogger } from 'src/domain/logger/logger.interface';
+import { LoggerService } from '../logger/logger.service';
 
 @Injectable()
 export class DatabaseUserRepository implements UserRepository {
   constructor(
     @InjectRepository(User)
     private readonly userEntityRepository: Repository<User>,
+    private readonly logger: LoggerService,
+    private readonly bcryptService: BcryptService,
   ) {}
   async updateRefreshToken(username: string, refreshToken: string): Promise<void> {
     await this.userEntityRepository.update(
@@ -18,6 +23,25 @@ export class DatabaseUserRepository implements UserRepository {
       },
       { hach_refresh_token: refreshToken },
     );
+  }
+
+  async createUser(username: string, password: string): Promise<User> {
+    this.logger.log('Create User in DatabaseUserRepository', 'check');
+    const found_user: any = await this.userEntityRepository.findOne({
+      where: {
+        username: username,
+      },
+    });
+    console.log(found_user);
+    if (found_user) {
+      throw 'Duplicate user';
+    }
+    console.log('doesnt return ');
+    const hashed_password = await this.bcryptService.hash(password);
+    const user = new User();
+    user.username = username;
+    user.password = hashed_password;
+    return this.userEntityRepository.save(user);
   }
   async getUserByUsername(username: string): Promise<UserM> {
     const adminUserEntity = await this.userEntityRepository.findOne({

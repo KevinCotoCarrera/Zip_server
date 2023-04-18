@@ -1,3 +1,5 @@
+import { FileM } from './file';
+
 export class UserWithoutPassword {
   id: number;
   username: string;
@@ -5,6 +7,7 @@ export class UserWithoutPassword {
   updatedDate: Date;
   lastLogin: Date;
   hashRefreshToken: string;
+  files: FileM[];
 }
 
 export class UserM extends UserWithoutPassword {

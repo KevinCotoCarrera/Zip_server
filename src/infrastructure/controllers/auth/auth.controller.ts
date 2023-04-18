@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Inject, Post, Req, Request, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiExtraModels, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
-import { AuthLoginDto } from './auth-dto.class';
+import { AuthLoginDto, AuthSignupDto } from './auth-dto.class';
 import { IsAuthPresenter } from './auth.presenter';
 
 import JwtRefreshGuard from '../../common/guards/jwtRefresh.guard';
@@ -15,6 +15,12 @@ import { IsAuthenticatedUseCases } from '../../../usecases/auth/isAuthenticated.
 import { LogoutUseCases } from '../../../usecases/auth/logout.usecases';
 
 import { ApiResponseType } from '../../common/swagger/response.decorator';
+import { request } from 'http';
+import { ILogger } from 'src/domain/logger/logger.interface';
+import { ExceptionsService } from 'src/infrastructure/exceptions/exceptions.service';
+import { SignupUseCases } from 'src/usecases/auth/signup.usecases';
+import { LoggerService } from 'src/infrastructure/logger/logger.service';
+import { User } from 'src/infrastructure/entities/user.entity';
 
 @Controller('auth')
 @ApiTags('auth')
@@ -26,14 +32,29 @@ import { ApiResponseType } from '../../common/swagger/response.decorator';
 @ApiExtraModels(IsAuthPresenter)
 export class AuthController {
   constructor(
+    private readonly exceptionService: ExceptionsService,
+    private readonly logger: LoggerService,
     @Inject(UsecasesProxyModule.LOGIN_USECASES_PROXY)
     private readonly loginUsecaseProxy: UseCaseProxy<LoginUseCases>,
+    @Inject(UsecasesProxyModule.SIGNUP_USECASES_PROXY)
+    private readonly signupUsecaseProxy: UseCaseProxy<SignupUseCases>,
     @Inject(UsecasesProxyModule.LOGOUT_USECASES_PROXY)
     private readonly logoutUsecaseProxy: UseCaseProxy<LogoutUseCases>,
     @Inject(UsecasesProxyModule.IS_AUTHENTICATED_USECASES_PROXY)
     private readonly isAuthUsecaseProxy: UseCaseProxy<IsAuthenticatedUseCases>,
   ) {}
-
+  @Post('signup')
+  @ApiBody({ type: AuthSignupDto })
+  @ApiOperation({ description: 'signup' })
+  async signup(@Body() auth: AuthSignupDto, @Request() request: Request) {
+    try {
+      await this.signupUsecaseProxy.getInstance().execute(auth);
+    } catch (error) {
+      this.logger.error('Signup Controller', error);
+      this.exceptionService.internalServerErrorException(error);
+    }
+    return 'User created succesfully';
+  }
   @Post('login')
   @UseGuards(LoginGuard)
   @ApiBearerAuth()

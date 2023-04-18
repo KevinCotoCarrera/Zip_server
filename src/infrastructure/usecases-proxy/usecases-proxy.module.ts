@@ -4,6 +4,7 @@ import { DynamicModule, Module } from '@nestjs/common';
 // import { GetTodoUseCases } from '../../usecases/todo/getTodo.usecases';
 // import { getTodosUseCases } from '../../usecases/todo/getTodos.usecases';
 // import { updateTodoUseCases } from '../../usecases/todo/updateTodo.usecases';
+import { SignupUseCases } from 'src/usecases/auth/signup.usecases';
 import { IsAuthenticatedUseCases } from '../../usecases/auth/isAuthenticated.usecases';
 import { LoginUseCases } from '../../usecases/auth/login.usecases';
 import { LogoutUseCases } from '../../usecases/auth/logout.usecases';
@@ -33,6 +34,7 @@ export class UsecasesProxyModule {
   static LOGIN_USECASES_PROXY = 'LoginUseCasesProxy';
   static IS_AUTHENTICATED_USECASES_PROXY = 'IsAuthenticatedUseCasesProxy';
   static LOGOUT_USECASES_PROXY = 'LogoutUseCasesProxy';
+  static SIGNUP_USECASES_PROXY = 'SignupUseCasesProxy';
 
   // static GET_TODO_USECASES_PROXY = 'getTodoUsecasesProxy';
   // static GET_TODOS_USECASES_PROXY = 'getTodosUsecasesProxy';
@@ -54,6 +56,12 @@ export class UsecasesProxyModule {
             userRepo: DatabaseUserRepository,
             bcryptService: BcryptService,
           ) => new UseCaseProxy(new LoginUseCases(logger, jwtTokenService, config, userRepo, bcryptService)),
+        },
+        {
+          inject: [LoggerService, DatabaseUserRepository],
+          provide: UsecasesProxyModule.SIGNUP_USECASES_PROXY,
+          useFactory: (logger: LoggerService, userRepo: DatabaseUserRepository) =>
+            new UseCaseProxy(new SignupUseCases(logger, userRepo)),
         },
         {
           inject: [DatabaseUserRepository],
@@ -99,7 +107,7 @@ export class UsecasesProxyModule {
         // UsecasesProxyModule.GET_TODOS_USECASES_PROXY,
         // UsecasesProxyModule.POST_TODO_USECASES_PROXY,
         // UsecasesProxyModule.PUT_TODO_USECASES_PROXY,
-        // UsecasesProxyModule.DELETE_TODO_USECASES_PROXY,
+        UsecasesProxyModule.SIGNUP_USECASES_PROXY,
         UsecasesProxyModule.LOGIN_USECASES_PROXY,
         UsecasesProxyModule.IS_AUTHENTICATED_USECASES_PROXY,
         UsecasesProxyModule.LOGOUT_USECASES_PROXY,
