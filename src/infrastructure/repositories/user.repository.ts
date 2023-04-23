@@ -14,7 +14,7 @@ export class DatabaseUserRepository implements UserRepository {
     @InjectRepository(User)
     private readonly userEntityRepository: Repository<User>,
     private readonly logger: LoggerService,
-    private readonly bcryptService: BcryptService,
+    private readonly bcryptService: BcryptService
   ) {}
   async updateRefreshToken(username: string, refreshToken: string): Promise<void> {
     await this.userEntityRepository.update(
@@ -37,10 +37,10 @@ export class DatabaseUserRepository implements UserRepository {
       throw 'Duplicate user';
     }
     console.log('doesnt return ');
-    //const hashed_password = await this.bcryptService.hash(password);
+    const hashed_password = await this.bcryptService.hash(password);
     const user = new User();
     user.username = username;
-    user.password = password;
+    user.password = hashed_password;
     return this.userEntityRepository.save(user);
   }
   async getUserByUsername(username: string): Promise<UserM> {

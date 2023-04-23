@@ -1,9 +1,10 @@
+import { Cipher } from 'crypto';
 import { IBcryptService } from '../../domain/adapters/bcrypt.interface';
 import { IJwtService, IJwtServicePayload } from '../../domain/adapters/jwt.interface';
 import { JWTConfig } from '../../domain/config/jwt.interface';
 import { ILogger } from '../../domain/logger/logger.interface';
 import { UserRepository } from '../../domain/repositories/userRepository.interface';
-
+import SimpleCrypto from "simple-crypto-js"
 export class LoginUseCases {
   constructor(
     private readonly logger: ILogger,
@@ -12,6 +13,7 @@ export class LoginUseCases {
     private readonly userRepository: UserRepository,
     private readonly bcryptService: IBcryptService,
   ) {}
+  private simpleCrypto = new SimpleCrypto('123')
 
   async getCookieWithJwtToken(username: string) {
     this.logger.log('LoginUseCases execute', `The user ${username} have been logged.`);
@@ -38,6 +40,9 @@ export class LoginUseCases {
     if (!user) {
       return null;
     }
+    console.log(user.password)
+    console.log(pass)
+    
     const match = await this.bcryptService.compare(pass, user.password);
     if (user && match) {
       await this.updateLoginTime(user.username);
